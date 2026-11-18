@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using EventRegistration.Data;
+using EventRegistration.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Подключение к базе данных SQLite
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=events.db"));
+
+// Регистрация нашего сервиса бизнес-логики
+builder.Services.AddScoped<RegistrationService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

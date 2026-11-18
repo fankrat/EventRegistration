@@ -2,16 +2,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EventRegistration.Models;
 using EventRegistration.Data;
+using EventRegistration.Services;
 
 namespace EventRegistration.Controllers;
 
 public class EventsController : Controller
 {
     private readonly AppDbContext _context;
+    private readonly RegistrationService _registrationService;
 
-    public EventsController(AppDbContext context)
+    // Внедряем и базу данных, и наш новый Сервис
+    public EventsController(AppDbContext context, RegistrationService registrationService)
     {
         _context = context;
+        _registrationService = registrationService;
     }
 
     // GET: /Events
@@ -110,70 +114,37 @@ public class EventsController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult Register(int Id, int ParticipantId)
     {
-        var ev = _context.Events.FirstOrDefault(m => m.Id == Id);
-        if (ev == null) return NotFound();
+        // Вся логика теперь в Сервисе! Контроллер просто вызывает его.
+        var result = _registrationService.Register(Id, ParticipantId);
 
-        if (ParticipantId == 0)
+        if (!result.IsSuccess)
         {
-            TempData["Error"] = "Пожалуйста, выберите участника.";
+            TempData["Error"] = result.ErrorMessage;
+            var ev = _context.Events.FirstOrDefault(m => m.Id == Id);
             ViewBag.Participants = _context.Participants.ToList();
             return View(ev);
         }
 
-        var activeRegistrationsCount = _context.Registrations
-            .Count(r => r.EventId == Id && r.Status == "Активна");
-            
-        if (activeRegistrationsCount >= ev.Capacity)
-        {
-            TempData["Error"] = "Свободных мест нет! Регистрация невозможна.";
-            ViewBag.Participants = _context.Participants.ToList();
-            return View(ev);
-        }
-
-        var isAlreadyRegistered = _context.Registrations
-            .Any(r => r.EventId == Id && r.ParticipantId == ParticipantId && r.Status == "Активна");
-            
-        if (isAlreadyRegistered)
-        {
-            TempData["Error"] = "Этот участник уже зарегистрирован на данное мероприятие.";
-            ViewBag.Participants = _context.Participants.ToList();
-            return View(ev);
-        }
-
-        var newRegistration = new Registration
-        {
-            EventId = Id,
-            ParticipantId = ParticipantId,
-            Status = "Активна",
-            CreatedAt = DateTime.Now
-        };
-
-        _context.Registrations.Add(newRegistration);
-        _context.SaveChanges();
-
-        TempData["Success"] = "Участник успешно зарегистрирован!";
+        TempData["Success"] = result.ErrorMessage; // Тут лежит текст успеха
         return RedirectToAction(nameof(Details), new { id = Id });
     }
 
-    // POST: /Events/CancelRegistration/5 (ОТМЕНА РЕГИСТРАЦИИ)
+    // POST: /Events/CancelRegistration/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult CancelRegistration(int id) // id - это Id самой регистрации
+    public IActionResult CancelRegistration(int id) // id - это Id регистрации
     {
-        // Находим регистрацию в базе
-        var registration = _context.Registrations
-            .Include(r => r.Event)
-            .FirstOrDefault(r => r.Id == id);
-            
-        if (registration == null) return NotFound();
-
-        // Меняем статус на "Отменена". Место автоматически освобождается благодаря нашей логике подсчета!
-        registration.Status = "Отменена";
-        _context.SaveChanges();
+        // Опять же, вся работа с базой и статусами скрыта в Сервисе
+        var success = _registrationService.Cancel(id);
+        
+        if (!success) return NotFound();
 
         TempData["Success"] = "Регистрация успешно отменена. Место освобождено.";
         
-        // Возвращаемся на страницу подробностей этого мероприятия
+        // Нам нужно узнать ID мероприятия, чтобы вернуться на его страницу.
+        // Достаём его из базы (это быстро).
+        var registration = _context.Registrations.Find(id);
+        
         return RedirectToAction(nameof(Details), new { id = registration.EventId });
     }
 }
