@@ -1,0 +1,31 @@
+@model List<EventRegistration.Models.Event>
+
+@{
+    ViewData["Title"] = "Мероприятия";
+}
+
+<h1>Список мероприятий</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Название</th>
+            <th>Дата</th>
+            <th>Место</th>
+            <th>Всего мест</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var ev in Model)
+    {
+        <tr>
+            <td>@ev.Id</td>
+            <td>@ev.Title</td>
+            <td>@ev.Date.ToString("dd.MM.yyyy")</td>
+            <td>@ev.Place</td>
+            <td>@ev.Capacity</td>
+        </tr>
+    }
+    </tbody>
+</table>
