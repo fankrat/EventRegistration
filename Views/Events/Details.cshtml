@@ -1,0 +1,27 @@
+@model EventRegistration.Models.Event
+
+@{
+    ViewData["Title"] = "Подробности мероприятия";
+}
+
+<h1>Подробности мероприятия</h1>
+
+<div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">Название</dt>
+        <dd class="col-sm-10">@Model.Title</dd>
+
+        <dt class="col-sm-2">Дата</dt>
+        <dd class="col-sm-10">@Model.Date.ToString("dd.MM.yyyy")</dd>
+
+        <dt class="col-sm-2">Место</dt>
+        <dd class="col-sm-10">@Model.Place</dd>
+
+        <dt class="col-sm-2">Всего мест</dt>
+        <dd class="col-sm-10">@Model.Capacity</dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Index" class="btn btn-secondary">Назад к списку</a>
+</div>

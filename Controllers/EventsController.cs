@@ -30,13 +30,13 @@ public class EventsController : Controller
         return View(events);
     }
 
-    // GET: /Events/Create (показывает форму)
+    // GET: /Events/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: /Events/Create (сохраняет данные)
+    // POST: /Events/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult Create(Event newEvent)
@@ -45,8 +45,46 @@ public class EventsController : Controller
         {
             _context.Events.Add(newEvent);
             _context.SaveChanges();
-            return RedirectToAction(nameof(Index)); // После сохранения перенаправляем на список
+            return RedirectToAction(nameof(Index));
         }
-        return View(newEvent); // Если данные неверные, возвращаем форму с ошибками
+        return View(newEvent);
+    }
+
+    // GET: /Events/Details/5
+    public IActionResult Details(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var ev = _context.Events.FirstOrDefault(m => m.Id == id);
+        if (ev == null) return NotFound();
+
+        return View(ev);
+    }
+
+    // GET: /Events/Edit/5 (показывает форму редактирования)
+    public IActionResult Edit(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var ev = _context.Events.Find(id);
+        if (ev == null) return NotFound();
+
+        return View(ev);
+    }
+
+    // POST: /Events/Edit/5 (сохраняет изменения)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Edit(int id, Event newEvent)
+    {
+        if (id != newEvent.Id) return NotFound();
+
+        if (ModelState.IsValid)
+        {
+            _context.Events.Update(newEvent);
+            _context.SaveChanges();
+            return RedirectToAction(nameof(Index));
+        }
+        return View(newEvent);
     }
 }
