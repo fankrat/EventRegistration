@@ -16,6 +16,14 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+// === НОВЫЙ БЛОК: Автоматическое применение миграций (создание БД) при запуске ===
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate(); // Если таблиц нет, они будут созданы
+}
+// ====================================================================================
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
