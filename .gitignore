@@ -490,3 +490,8 @@ obj/
 *.db
 *.db-shm
 *.db-wal
+bin/
+obj/
+*.db
+*.db-shm
+*.db-wal
