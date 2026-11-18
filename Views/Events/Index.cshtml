@@ -6,6 +6,15 @@
 
 <h1>Список мероприятий</h1>
 
+<!-- Блок поиска -->
+<form asp-action="Index" method="get" class="mb-3">
+    <div class="input-group" style="max-width: 500px;">
+        <input type="text" name="searchString" class="form-control" placeholder="Поиск по названию..." value="@ViewData["CurrentFilter"]" />
+        <button type="submit" class="btn btn-primary">Найти</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Сбросить</a>
+    </div>
+</form>
+
 <p>
     <a asp-action="Create" class="btn btn-success">Добавить мероприятие</a>
 </p>

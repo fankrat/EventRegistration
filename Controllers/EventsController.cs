@@ -18,8 +18,8 @@ public class EventsController : Controller
         _registrationService = registrationService;
     }
 
-    // GET: /Events
-    public IActionResult Index()
+    // GET: /Events (с поиском)
+    public IActionResult Index(string searchString)
     {
         if (!_context.Events.Any())
         {
@@ -31,8 +31,19 @@ public class EventsController : Controller
             _context.SaveChanges();
         }
 
-        var events = _context.Events.ToList();
-        return View(events);
+        // Берем все мероприятия
+        var events = _context.Events.AsQueryable();
+
+        // Если ввели текст в поиск, фильтруем по названию
+        if (!string.IsNullOrEmpty(searchString))
+        {
+            events = events.Where(e => e.Title.Contains(searchString));
+        }
+
+        // Передаем в представление найденный текст, чтобы он не пропадал из строки поиска
+        ViewData["CurrentFilter"] = searchString;
+
+        return View(events.ToList());
     }
 
     // GET: /Events/Create
