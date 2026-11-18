@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using EventRegistration.Models;
 using EventRegistration.Data;
 
@@ -55,13 +56,17 @@ public class EventsController : Controller
     {
         if (id == null) return NotFound();
 
-        var ev = _context.Events.FirstOrDefault(m => m.Id == id);
+        var ev = _context.Events
+            .Include(e => e.Registrations!)
+            .ThenInclude(r => r.Participant)
+            .FirstOrDefault(m => m.Id == id);
+            
         if (ev == null) return NotFound();
 
         return View(ev);
     }
 
-    // GET: /Events/Edit/5 (показывает форму редактирования)
+    // GET: /Events/Edit/5
     public IActionResult Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -72,7 +77,7 @@ public class EventsController : Controller
         return View(ev);
     }
 
-    // POST: /Events/Edit/5 (сохраняет изменения)
+    // POST: /Events/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult Edit(int id, Event newEvent)
@@ -86,5 +91,89 @@ public class EventsController : Controller
             return RedirectToAction(nameof(Index));
         }
         return View(newEvent);
+    }
+
+    // GET: /Events/Register/5
+    public IActionResult Register(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var ev = _context.Events.FirstOrDefault(m => m.Id == id);
+        if (ev == null) return NotFound();
+
+        ViewBag.Participants = _context.Participants.ToList();
+        return View(ev);
+    }
+
+    // POST: /Events/Register/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Register(int Id, int ParticipantId)
+    {
+        var ev = _context.Events.FirstOrDefault(m => m.Id == Id);
+        if (ev == null) return NotFound();
+
+        if (ParticipantId == 0)
+        {
+            TempData["Error"] = "Пожалуйста, выберите участника.";
+            ViewBag.Participants = _context.Participants.ToList();
+            return View(ev);
+        }
+
+        var activeRegistrationsCount = _context.Registrations
+            .Count(r => r.EventId == Id && r.Status == "Активна");
+            
+        if (activeRegistrationsCount >= ev.Capacity)
+        {
+            TempData["Error"] = "Свободных мест нет! Регистрация невозможна.";
+            ViewBag.Participants = _context.Participants.ToList();
+            return View(ev);
+        }
+
+        var isAlreadyRegistered = _context.Registrations
+            .Any(r => r.EventId == Id && r.ParticipantId == ParticipantId && r.Status == "Активна");
+            
+        if (isAlreadyRegistered)
+        {
+            TempData["Error"] = "Этот участник уже зарегистрирован на данное мероприятие.";
+            ViewBag.Participants = _context.Participants.ToList();
+            return View(ev);
+        }
+
+        var newRegistration = new Registration
+        {
+            EventId = Id,
+            ParticipantId = ParticipantId,
+            Status = "Активна",
+            CreatedAt = DateTime.Now
+        };
+
+        _context.Registrations.Add(newRegistration);
+        _context.SaveChanges();
+
+        TempData["Success"] = "Участник успешно зарегистрирован!";
+        return RedirectToAction(nameof(Details), new { id = Id });
+    }
+
+    // POST: /Events/CancelRegistration/5 (ОТМЕНА РЕГИСТРАЦИИ)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult CancelRegistration(int id) // id - это Id самой регистрации
+    {
+        // Находим регистрацию в базе
+        var registration = _context.Registrations
+            .Include(r => r.Event)
+            .FirstOrDefault(r => r.Id == id);
+            
+        if (registration == null) return NotFound();
+
+        // Меняем статус на "Отменена". Место автоматически освобождается благодаря нашей логике подсчета!
+        registration.Status = "Отменена";
+        _context.SaveChanges();
+
+        TempData["Success"] = "Регистрация успешно отменена. Место освобождено.";
+        
+        // Возвращаемся на страницу подробностей этого мероприятия
+        return RedirectToAction(nameof(Details), new { id = registration.EventId });
     }
 }

@@ -22,4 +22,7 @@ public class Event
     [Range(1, 10000, ErrorMessage = "Количество мест должно быть больше 0")]
     [Display(Name = "Всего мест")]
     public int Capacity { get; set; }
+
+    // Связь: у одного мероприятия может быть много регистраций
+    public List<Registration>? Registrations { get; set; }
 }

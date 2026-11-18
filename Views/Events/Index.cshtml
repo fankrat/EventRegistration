@@ -31,6 +31,7 @@
             <td>@ev.Place</td>
             <td>@ev.Capacity</td>
             <td>
+                <a asp-action="Register" asp-route-id="@ev.Id">Зарегистрировать</a> | 
                 <a asp-action="Details" asp-route-id="@ev.Id">Подробнее</a> | 
                 <a asp-action="Edit" asp-route-id="@ev.Id">Редактировать</a>
             </td>

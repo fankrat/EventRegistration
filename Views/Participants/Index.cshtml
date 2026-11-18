@@ -1,0 +1,31 @@
+@model List<EventRegistration.Models.Participant>
+
+@{
+    ViewData["Title"] = "Участники";
+}
+
+<h1>Список участников</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-success">Добавить участника</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>ФИО</th>
+            <th>Телефон/Email</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var participant in Model)
+    {
+        <tr>
+            <td>@participant.Id</td>
+            <td>@participant.FullName</td>
+            <td>@participant.ContactInfo</td>
+        </tr>
+    }
+    </tbody>
+</table>
